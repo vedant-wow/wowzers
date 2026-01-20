@@ -30,10 +30,11 @@ let bottomPipeImg;
 
 //physics
 let velocityX = -2; //pipes moving left speed
-let velocityY = -6; //bird jump speed - starts with upward momentum
-let gravity = 0.35; // Balanced gravity for controllable gameplay
+let velocityY = -4; //bird jump speed - starts with upward momentum
+let gravity = 0.3; // Balanced gravity for controllable gameplay
 
 let gameOver = false;
+let gameStarted = false; // Prevents the bird from falling until player is ready
 let score = 0;
 
 //audio
@@ -68,7 +69,7 @@ window.onload = function () {
   bottomPipeImg.src = "./bottompipe.png";
 
   requestAnimationFrame(update);
-  setInterval(placePipes, 2300); //every 2.3 seconds
+  setInterval(placePipes, 2700); //every 2.7 seconds
 
   // Click to initialize audio (required by browser policy) and reset game
   document.addEventListener("click", function () {
@@ -80,6 +81,10 @@ window.onload = function () {
       pipeArray = [];
       score = 0;
       gameOver = false;
+      velocityY = -4; // Head start on restart
+    } else if (!gameStarted) {
+      gameStarted = true;
+      velocityY = -4; // Head start on first start
     }
   });
 };
@@ -111,6 +116,16 @@ function update() {
   }
   context.clearRect(0, 0, board.width, board.height);
 
+  if (!gameStarted) {
+    // Keep bird at start position until player starts
+    context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+    context.fillStyle = "white";
+    context.font = "20px sans-serif";
+    context.textAlign = "center";
+    context.fillText("CLICK TO START", boardWidth / 2, boardHeight / 2 + 100);
+    return;
+  }
+
   // Process audio input for voice control
   if (audioInitialized && analyser) {
     analyser.getByteFrequencyData(dataArray);
@@ -137,6 +152,9 @@ function update() {
     const VOLUME_THRESHOLD = 0.2;
 
     if (volume > VOLUME_THRESHOLD) {
+      if (!gameStarted) {
+        gameStarted = true;
+      }
       // Reduced base jump force for gentler control
       let baseForce = -4;
 
@@ -183,6 +201,7 @@ function update() {
   //score
   context.fillStyle = "white";
   context.font = "45px sans-serif";
+  context.textAlign = "left"; // Set alignment for score display
   context.fillText(score, 5, 45);
 
   if (gameOver) {
@@ -191,7 +210,7 @@ function update() {
 }
 
 function placePipes() {
-  if (gameOver) {
+  if (gameOver || !gameStarted) {
     return;
   }
 
