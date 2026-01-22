@@ -61,7 +61,7 @@ const FIREBASE_CONFIG = {
 let isUsernameValid = false;
 let usernameCheckInProgress = false;
 
-// Debounce Utility for entering the username 
+// Debounce Utility for entering the username
 function debounce(func, wait) {
   let timeout;
   return function executedFunction(...args) {
@@ -90,6 +90,77 @@ function initFirebase() {
     console.warn(
       "Firebase config missing. Registration will be local-only or fail."
     );
+  }
+}
+
+async function loadLeaderboards() {
+  const mostGamesContainer = document.getElementById("most-games-list");
+  const highestScoreContainer = document.getElementById("highest-score-list");
+
+  if (!db) {
+    mostGamesContainer.innerHTML =
+      '<p class="leaderboard-error">Offline mode - leaderboards unavailable</p>';
+    highestScoreContainer.innerHTML =
+      '<p class="leaderboard-error">Offline mode - leaderboards unavailable</p>';
+    return;
+  }
+
+  try {
+    // Load Most Games Played
+    const usersSnapshot = await db
+      .collection("users")
+      .orderBy("totalGames", "desc")
+      .limit(5)
+      .get();
+
+    if (usersSnapshot.empty) {
+      mostGamesContainer.innerHTML =
+        '<p class="leaderboard-empty">No data yet. Be the first to play!</p>';
+    } else {
+      let gamesHTML = '<ol class="leaderboard-list">';
+      usersSnapshot.forEach((doc) => {
+        const data = doc.data();
+        gamesHTML += `
+          <li class="leaderboard-item">
+            <span class="lb-username">${data.username}</span>
+            <span class="lb-value">${data.totalGames || 0} games</span>
+          </li>
+        `;
+      });
+      gamesHTML += "</ol>";
+      mostGamesContainer.innerHTML = gamesHTML;
+    }
+
+    // Load Highest Scores
+    const scoresSnapshot = await db
+      .collection("scores")
+      .orderBy("score", "desc")
+      .limit(5)
+      .get();
+
+    if (scoresSnapshot.empty) {
+      highestScoreContainer.innerHTML =
+        '<p class="leaderboard-empty">No scores yet. Be the first!</p>';
+    } else {
+      let scoresHTML = '<ol class="leaderboard-list">';
+      scoresSnapshot.forEach((doc) => {
+        const data = doc.data();
+        scoresHTML += `
+          <li class="leaderboard-item">
+            <span class="lb-username">${data.username}</span>
+            <span class="lb-value">${data.score} pts</span>
+          </li>
+        `;
+      });
+      scoresHTML += "</ol>";
+      highestScoreContainer.innerHTML = scoresHTML;
+    }
+  } catch (e) {
+    console.error("Error loading leaderboards:", e);
+    mostGamesContainer.innerHTML =
+      '<p class="leaderboard-error">Error loading data</p>';
+    highestScoreContainer.innerHTML =
+      '<p class="leaderboard-error">Error loading data</p>';
   }
 }
 
@@ -123,12 +194,20 @@ window.onload = function () {
   const usernameInput = document.getElementById("username");
   const emailInput = document.getElementById("email");
   const signupError = document.getElementById("signup-error");
-  const authToggle = document.getElementById("auth-toggle"); 
+  const authToggle = document.getElementById("auth-toggle");
   const authActionLink = authToggle.querySelector(".action-link");
 
   const startScreen = document.getElementById("start-screen");
   const playBtn = document.getElementById("play-btn");
   const logoutBtn = document.getElementById("logout-btn");
+  const leaderboardBtn = document.getElementById("leaderboard-btn");
+
+  const leaderboardScreen = document.getElementById("leaderboard-screen");
+  const backBtn = document.getElementById("back-btn");
+  const tabGames = document.getElementById("tab-games");
+  const tabScores = document.getElementById("tab-scores");
+  const tabContentGames = document.getElementById("tab-content-games");
+  const tabContentScores = document.getElementById("tab-content-scores");
 
   const gameOverScreen = document.getElementById("game-over-screen");
   const restartBtn = document.getElementById("restart-btn");
@@ -181,6 +260,7 @@ window.onload = function () {
     // Show Signup Screen
     startScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
+    leaderboardScreen.classList.add("hidden");
     signupScreen.classList.remove("hidden");
   }
 
@@ -195,6 +275,7 @@ window.onload = function () {
 
     // UI Transition
     gameOverScreen.classList.add("hidden");
+    leaderboardScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
   }
 
@@ -202,13 +283,42 @@ window.onload = function () {
 
   // 0. Toggle Auth Mode
   authActionLink.addEventListener("click", toggleAuthMode);
-
   // 1. Navigation Buttons
   logoutBtn.addEventListener("click", logoutUser);
   logoutBtnGameover.addEventListener("click", logoutUser);
   homeBtn.addEventListener("click", goHome);
 
-  // 2. Real-time Username Check
+  // Tab switching
+  tabGames.addEventListener("click", function () {
+    tabGames.classList.add("active");
+    tabScores.classList.remove("active");
+    tabContentGames.classList.remove("hidden");
+    tabContentGames.classList.add("active");
+    tabContentScores.classList.add("hidden");
+    tabContentScores.classList.remove("active");
+  });
+
+  tabScores.addEventListener("click", function () {
+    tabScores.classList.add("active");
+    tabGames.classList.remove("active");
+    tabContentScores.classList.remove("hidden");
+    tabContentScores.classList.add("active");
+    tabContentGames.classList.add("hidden");
+    tabContentGames.classList.remove("active");
+  });
+
+  // Leaderboard navigation
+  leaderboardBtn.addEventListener("click", function () {
+    startScreen.classList.add("hidden");
+    leaderboardScreen.classList.remove("hidden");
+    loadLeaderboards();
+  });
+
+  backBtn.addEventListener("click", function () {
+    leaderboardScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  });
+
   usernameInput.addEventListener(
     "input",
     debounce(async function () {
@@ -229,7 +339,6 @@ window.onload = function () {
             .collection("users")
             .where("username", "==", username)
             .get();
-
           const userExists = !snapshot.empty;
 
           if (isLoginMode) {
@@ -300,10 +409,6 @@ window.onload = function () {
 
     // If not checked yet (fast typing), do strict check
     if (db && !isUsernameValid) {
-      // Trigger one final check manually? Or just rely on previous debounce?
-      // Let's assume debounce caught it, OR just error if isUsernameValid is false
-      // But if they typed fast and clicked, isUsernameValid might be false default.
-      // Let's force a quick check if needed:
       try {
         const snapshot = await db
           .collection("users")
@@ -482,7 +587,6 @@ function update() {
       // Sharpness multiplier (higher pitch = stronger jump)
       // Map sharpness from 0-1 to 0.8-1.4 multiplier
       let sharpnessMultiplier = 0.8 + sharpness * 0.6;
-
       // Apply voice-controlled jump (direct, no smoothing)
       velocityY = baseForce * sharpnessMultiplier;
     }
@@ -490,8 +594,7 @@ function update() {
 
   //bird
   velocityY += gravity;
-  // bird.y += velocityY;
-  bird.y = Math.max(bird.y + velocityY, 0); //apply gravity to current bird.y, limit the bird.y to top of the canvas
+  bird.y = Math.max(bird.y + velocityY, 0); //apply gravity to current bird.y, limit the bird.y
   context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
 
   if (bird.y > board.height) {

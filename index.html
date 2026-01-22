@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" , content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flappy Bird</title>
     <link rel="stylesheet" href="flappybird.css" />
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -10,6 +10,7 @@
     <script src="flappybird.js"></script>
   </head>
   <body>
+    <!-- Signup Screen -->
     <div id="signup-screen">
       <h1 class="game-title">FLAPPY BIRD</h1>
       <input
@@ -31,7 +32,9 @@
       </p>
     </div>
 
+    <!-- Start Screen -->
     <div id="start-screen" class="hidden">
+      <button id="leaderboard-btn" class="tertiary-btn">🏆 LEADERBOARD</button>
       <div class="instructions">
         <h2>HOW TO PLAY</h2>
         <p>🎤 Make noise to FLY</p>
@@ -39,8 +42,38 @@
         <p>🤫 Quiet = Fall Down</p>
       </div>
       <button id="play-btn">PLAY</button>
+
       <button id="logout-btn" class="secondary-btn">LOGOUT</button>
     </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="hidden">
+      <h1 class="game-title">🏆LEADERBOARD</h1>
+
+      <div class="leaderboard-tabs">
+        <button id="tab-games" class="tab-btn active">
+          Most<br />
+          Games
+        </button>
+        <button id="tab-scores" class="tab-btn">High Scores</button>
+      </div>
+
+      <div id="tab-content-games" class="tab-content active">
+        <div id="most-games-list" class="leaderboard-container">
+          <p class="loading-text">Loading...</p>
+        </div>
+      </div>
+
+      <div id="tab-content-scores" class="tab-content hidden">
+        <div id="highest-score-list" class="leaderboard-container">
+          <p class="loading-text">Loading...</p>
+        </div>
+      </div>
+
+      <button id="back-btn" class="secondary-btn">← BACK</button>
+    </div>
+
+    <!-- Game Over Screen -->
     <div id="game-over-screen" class="hidden">
       <h1 class="game-title">GAME OVER</h1>
       <p id="final-score">Score: 0</p>
@@ -48,6 +81,7 @@
       <button id="home-btn" class="secondary-btn">HOME</button>
       <button id="logout-btn-gameover" class="secondary-btn">LOGOUT</button>
     </div>
+
     <canvas id="board"></canvas>
   </body>
 </html>
