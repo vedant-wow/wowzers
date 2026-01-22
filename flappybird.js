@@ -37,7 +37,7 @@ let gameOver = false;
 let gameWon = false;
 let gameStarted = false; // Prevents the bird from falling until player is ready
 let score = 0;
-let victoryLevel = 2; // Score needed to win the game
+let victoryLevel = 30; // Score needed to win the game
 
 // confetti
 let confettiArray = [];
