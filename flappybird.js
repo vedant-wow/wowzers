@@ -38,6 +38,50 @@ let gameWon = false;
 let gameStarted = false; // Prevents the bird from falling until player is ready
 let score = 0;
 
+// confetti
+let confettiArray = [];
+function initConfetti() {
+  confettiArray = [];
+  const colors = [
+    "#f2d74e",
+    "#95c3de",
+    "#ff9a91",
+    "#f2d74e",
+    "#a1cc85",
+    "#be91ff",
+  ];
+  for (let i = 0; i < 100; i++) {
+    confettiArray.push({
+      x: Math.random() * boardWidth,
+      y: Math.random() * boardHeight - boardHeight,
+      size: Math.random() * 7 + 5,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      speedY: Math.random() * 3 + 2,
+      speedX: Math.random() * 2 - 1,
+      rotation: Math.random() * 360,
+      rotationSpeed: Math.random() * 10 - 5,
+    });
+  }
+}
+
+function updateAndDrawConfetti() {
+  confettiArray.forEach((p) => {
+    p.y += p.speedY;
+    p.x += p.speedX;
+    p.rotation += p.rotationSpeed;
+    if (p.y > boardHeight) {
+      p.y = -20;
+      p.x = Math.random() * boardWidth;
+    }
+    context.save();
+    context.translate(p.x, p.y);
+    context.rotate((p.rotation * Math.PI) / 180);
+    context.fillStyle = p.color;
+    context.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    context.restore();
+  });
+}
+
 //audio
 let audioContext;
 let analyser;
@@ -261,6 +305,8 @@ window.onload = function () {
     // Reset Game State
     gameStarted = false;
     gameOver = false;
+    gameWon = false;
+    confettiArray = [];
     score = 0;
     pipeArray = [];
     bird.y = birdY;
@@ -277,6 +323,8 @@ window.onload = function () {
     // Reset Game State
     gameStarted = false;
     gameOver = false;
+    gameWon = false; // Stop victory loop
+    confettiArray = []; // Clear confetti
     score = 0;
     pipeArray = [];
     bird.y = birdY;
@@ -561,10 +609,30 @@ async function initAudio() {
 
 function update() {
   requestAnimationFrame(update);
-  if (gameOver) {
+  if (gameOver && !gameWon) {
     return;
   }
   context.clearRect(0, 0, board.width, board.height);
+
+  if (gameWon) {
+    // Draw static game state
+    context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+    for (let i = 0; i < pipeArray.length; i++) {
+      let pipe = pipeArray[i];
+      context.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+    }
+    // Draw confetti on top
+    updateAndDrawConfetti();
+
+    // Ensure victory screen is shown
+    const victoryScreen = document.getElementById("victory-screen");
+    const victoryScoreText = document.getElementById("victory-score");
+    if (victoryScreen.classList.contains("hidden")) {
+      victoryScoreText.innerText = "Score: " + Math.floor(score);
+      victoryScreen.classList.remove("hidden");
+    }
+    return;
+  }
 
   if (!gameStarted) {
     // Keep bird at start position until player starts
@@ -763,6 +831,7 @@ function handleVictory() {
   if (gameOver) return; // Prevent double firing
   gameOver = true;
   gameWon = true;
+  initConfetti();
 
   // Save score to Firebase
   if (
@@ -810,4 +879,5 @@ function resetGame() {
   gameOver = false;
   gameWon = false;
   velocityY = -4;
+  confettiArray = [];
 }

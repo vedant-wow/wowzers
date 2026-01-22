@@ -19,12 +19,24 @@ body {
 #start-screen,
 #game-over-screen,
 #signup-screen,
-#leaderboard-screen,
-#victory-screen {
+#leaderboard-screen {
     position: absolute;
     width: 360px;
     height: 640px;
     background-image: url("./flappybirdbg.png");
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    overflow-y: auto;
+}
+
+#victory-screen {
+    position: absolute;
+    width: 360px;
+    height: 640px;
+    background-color: rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -43,6 +55,19 @@ body {
         2px 2px 0 #000;
     margin-bottom: 20px;
     line-height: 1.1;
+    animation: titlePulse 2s infinite ease-in-out;
+}
+
+@keyframes titlePulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
 }
 
 .instructions {
