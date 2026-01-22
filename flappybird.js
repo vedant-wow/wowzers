@@ -45,7 +45,57 @@ let dataArray;
 let bufferLength;
 let audioInitialized = false;
 
+// Firebase & User State
+let db;
+let currentUser = null;
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCS6VViqCQ9GE8IUbfFF3hLW82w64VUpF0",
+  authDomain: "voice-controlled-flappy-bird.firebaseapp.com",
+  projectId: "voice-controlled-flappy-bird",
+  storageBucket: "voice-controlled-flappy-bird.firebasestorage.app",
+  messagingSenderId: "911227757692",
+  appId: "1:911227757692:web:cbf7d173aa1d1043fc15f9",
+  measurementId: "G-L68R69FRVY",
+};
+
+let isUsernameValid = false;
+let usernameCheckInProgress = false;
+
+// Debounce Utility for entering the username 
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Initialize Firebase if config is present
+function initFirebase() {
+  // Basic check if config is filled (at least apiKey)
+  if (FIREBASE_CONFIG.apiKey) {
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.firestore();
+      console.log("Firebase initialized");
+    } catch (e) {
+      console.error("Firebase init error:", e);
+      alert("Firebase Error: Check console.");
+    }
+  } else {
+    console.warn(
+      "Firebase config missing. Registration will be local-only or fail."
+    );
+  }
+}
+
 window.onload = function () {
+  initFirebase();
+
   board = document.getElementById("board");
   board.height = boardHeight;
   board.width = boardWidth;
@@ -67,14 +117,276 @@ window.onload = function () {
   requestAnimationFrame(update);
   setInterval(placePipes, 2700); //every 2.7 seconds
 
-  // Play Button Interaction
-  const playBtn = document.getElementById("play-btn");
+  // --- UI Elements ---
+  const signupScreen = document.getElementById("signup-screen");
+  const signupBtn = document.getElementById("signup-btn");
+  const usernameInput = document.getElementById("username");
+  const emailInput = document.getElementById("email");
+  const signupError = document.getElementById("signup-error");
+  const authToggle = document.getElementById("auth-toggle"); 
+  const authActionLink = authToggle.querySelector(".action-link");
+
   const startScreen = document.getElementById("start-screen");
+  const playBtn = document.getElementById("play-btn");
+  const logoutBtn = document.getElementById("logout-btn");
 
-  // Game Over Interaction
-  const restartBtn = document.getElementById("restart-btn");
   const gameOverScreen = document.getElementById("game-over-screen");
+  const restartBtn = document.getElementById("restart-btn");
+  const homeBtn = document.getElementById("home-btn");
+  const logoutBtnGameover = document.getElementById("logout-btn-gameover");
 
+  // State for Auth Mode
+  let isLoginMode = false;
+
+  // --- Helper Functions ---
+  function toggleAuthMode() {
+    isLoginMode = !isLoginMode;
+
+    // Reset Inputs/Errors
+    signupError.classList.add("hidden");
+    signupError.innerText = "";
+    usernameInput.value = "";
+    emailInput.value = "";
+    signupBtn.disabled = false;
+
+    if (isLoginMode) {
+      // Switch to Login UI
+      emailInput.classList.add("hidden"); // Hide email for login
+      signupBtn.innerText = "LOGIN";
+      authToggle.innerHTML = `New player? <span class="action-link">Sign Up</span>`;
+      // Re-attach listener to new span
+      authToggle
+        .querySelector(".action-link")
+        .addEventListener("click", toggleAuthMode);
+    } else {
+      // Switch to Signup UI
+      emailInput.classList.remove("hidden");
+      signupBtn.innerText = "ENTER GAME";
+      authToggle.innerHTML = `Already have an account? <span class="action-link">Log In</span>`;
+      authToggle
+        .querySelector(".action-link")
+        .addEventListener("click", toggleAuthMode);
+    }
+  }
+
+  function logoutUser() {
+    currentUser = null;
+    // Reset Game State
+    gameStarted = false;
+    gameOver = false;
+    score = 0;
+    pipeArray = [];
+    bird.y = birdY;
+
+    // Show Signup Screen
+    startScreen.classList.add("hidden");
+    gameOverScreen.classList.add("hidden");
+    signupScreen.classList.remove("hidden");
+  }
+
+  function goHome() {
+    // Reset Game State
+    gameStarted = false;
+    gameOver = false;
+    score = 0;
+    pipeArray = [];
+    bird.y = birdY;
+    velocityY = -4;
+
+    // UI Transition
+    gameOverScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  }
+
+  // --- Event Listeners ---
+
+  // 0. Toggle Auth Mode
+  authActionLink.addEventListener("click", toggleAuthMode);
+
+  // 1. Navigation Buttons
+  logoutBtn.addEventListener("click", logoutUser);
+  logoutBtnGameover.addEventListener("click", logoutUser);
+  homeBtn.addEventListener("click", goHome);
+
+  // 2. Real-time Username Check
+  usernameInput.addEventListener(
+    "input",
+    debounce(async function () {
+      const username = usernameInput.value.trim();
+
+      // Reset state
+      signupError.classList.add("hidden");
+      signupBtn.disabled = false;
+      isUsernameValid = false;
+
+      if (!username) return;
+
+      if (db) {
+        usernameCheckInProgress = true;
+
+        try {
+          const snapshot = await db
+            .collection("users")
+            .where("username", "==", username)
+            .get();
+
+          const userExists = !snapshot.empty;
+
+          if (isLoginMode) {
+            // LOGIN MODE: Valid if user EXISTS
+            if (!userExists) {
+              signupError.innerText = "User not found";
+              signupError.classList.remove("hidden");
+              signupError.classList.remove("success-msg");
+              isUsernameValid = false;
+            } else {
+              isUsernameValid = true;
+              signupError.innerText = "Welcome back!";
+              signupError.classList.add("success-msg");
+              signupError.classList.remove("hidden");
+
+              // Store user data for login
+              const doc = snapshot.docs[0];
+              currentUser = { id: doc.id, ...doc.data() };
+            }
+          } else {
+            // SIGNUP MODE: Valid if user DOES NOT EXIST
+            if (userExists) {
+              signupError.innerText = "This username is already taken";
+              signupError.classList.remove("hidden");
+              signupError.classList.remove("success-msg");
+              isUsernameValid = false;
+            } else {
+              isUsernameValid = true;
+              signupError.innerText = "Username available!";
+              signupError.classList.add("success-msg");
+              signupError.classList.remove("hidden");
+            }
+          }
+        } catch (e) {
+          console.error("Check username error:", e);
+          isUsernameValid = true;
+        } finally {
+          usernameCheckInProgress = false;
+        }
+      } else {
+        // Offline mode - assume valid
+        isUsernameValid = true;
+      }
+    }, 500)
+  );
+
+  // 3. Login / Sign Up Action
+  signupBtn.addEventListener("click", async function () {
+    const username = usernameInput.value.trim();
+    const email = emailInput.value.trim();
+
+    // Clear previous errors
+    signupError.innerText = "";
+    signupError.classList.add("hidden");
+
+    if (!username) {
+      signupError.innerText = "Please enter a username!";
+      signupError.classList.remove("hidden");
+      return;
+    }
+
+    // Check if we are still waiting for a check
+    if (usernameCheckInProgress) {
+      signupError.innerText = "Checking...";
+      signupError.classList.remove("hidden");
+      return;
+    }
+
+    // If not checked yet (fast typing), do strict check
+    if (db && !isUsernameValid) {
+      // Trigger one final check manually? Or just rely on previous debounce?
+      // Let's assume debounce caught it, OR just error if isUsernameValid is false
+      // But if they typed fast and clicked, isUsernameValid might be false default.
+      // Let's force a quick check if needed:
+      try {
+        const snapshot = await db
+          .collection("users")
+          .where("username", "==", username)
+          .get();
+        const userExists = !snapshot.empty;
+
+        if (isLoginMode && !userExists) {
+          signupError.innerText = "User not found";
+          signupError.classList.remove("hidden");
+          return;
+        }
+        if (!isLoginMode && userExists) {
+          signupError.innerText = "Taken";
+          signupError.classList.remove("hidden");
+          return;
+        }
+        // Set current user if login (late check)
+        if (isLoginMode && userExists) {
+          const doc = snapshot.docs[0];
+          currentUser = { id: doc.id, ...doc.data() };
+        }
+      } catch (e) {}
+    }
+
+    if (db) {
+      if (isLoginMode) {
+        // LOGIN FLOW
+        // currentUser should ideally be set by the check, but verify
+        if (!currentUser || currentUser.username !== username) {
+          // Fallback fetch if check missed it
+          try {
+            const snapshot = await db
+              .collection("users")
+              .where("username", "==", username)
+              .get();
+            if (!snapshot.empty) {
+              const doc = snapshot.docs[0];
+              currentUser = { id: doc.id, ...doc.data() };
+            } else {
+              signupError.innerText = "User not found";
+              signupError.classList.remove("hidden");
+              return;
+            }
+          } catch (e) {
+            console.error("Login fetch error:", e);
+            // Fallback offline logic if DB fails? Rare.
+          }
+        }
+        // Proceed to game
+        console.log("Logged in as:", currentUser.username);
+      } else {
+        // SIGNUP FLOW
+        try {
+          signupBtn.innerText = "LOADING...";
+          const docRef = await db.collection("users").add({
+            username: username,
+            email: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            totalGames: 0,
+          });
+          currentUser = { id: docRef.id, username: username };
+          console.log("User registered with ID: ", docRef.id);
+        } catch (e) {
+          console.error("Error adding user: ", e);
+          signupError.innerText = "Error. Playing offline.";
+          signupError.classList.remove("hidden");
+
+          signupBtn.innerText = "ENTER GAME";
+          currentUser = { id: "offline_" + Date.now(), username: username };
+        }
+      }
+    } else {
+      // Offline fallback
+      currentUser = { id: "local_" + Date.now(), username: username };
+    }
+
+    // Transition to Start Screen
+    signupScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+  });
+
+  // 2. Play Game
   playBtn.addEventListener("click", function () {
     if (!audioInitialized) {
       initAudio();
@@ -87,6 +399,7 @@ window.onload = function () {
     }
   });
 
+  // 3. Restart Game
   restartBtn.addEventListener("click", function () {
     resetGame();
     gameOverScreen.classList.add("hidden");
@@ -182,7 +495,7 @@ function update() {
   context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
 
   if (bird.y > board.height) {
-    gameOver = true;
+    handleGameOver();
   }
 
   //pipes
@@ -197,7 +510,7 @@ function update() {
     }
 
     if (detectCollision(bird, pipe)) {
-      gameOver = true;
+      handleGameOver();
     }
   }
 
@@ -213,13 +526,56 @@ function update() {
   context.fillText(score, 5, 45);
 
   if (gameOver) {
+    // context.fillText("GAME OVER", 5, 90); // Removed in favor of screen
     const gameOverScreen = document.getElementById("game-over-screen");
     const finalScoreText = document.getElementById("final-score");
 
     if (gameOverScreen.classList.contains("hidden")) {
+      // Update UI
       finalScoreText.innerText = "Score: " + Math.floor(score);
       gameOverScreen.classList.remove("hidden");
     }
+  }
+}
+
+function handleGameOver() {
+  if (gameOver) return; // Prevent double firing
+  gameOver = true;
+
+  // Save score to Firebase
+  if (
+    db &&
+    currentUser &&
+    currentUser.id &&
+    !currentUser.id.startsWith("local_")
+  ) {
+    const finalScore = Math.floor(score);
+    console.log(`Saving score ${finalScore} for user ${currentUser.username}`);
+
+    // Save score
+    db.collection("scores")
+      .add({
+        userId: currentUser.id,
+        username: currentUser.username,
+        score: finalScore,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      })
+      .then(() => {
+        console.log("Score saved successfully!");
+      })
+      .catch((e) => {
+        console.error("Error saving score:", e);
+      });
+
+    // Update total games played user stat
+    db.collection("users")
+      .doc(currentUser.id)
+      .update({
+        totalGames: firebase.firestore.FieldValue.increment(1),
+      })
+      .catch((e) => {
+        console.error("Error updating totalGames:", e);
+      });
   }
 }
 

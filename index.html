@@ -5,17 +5,48 @@
     <meta name="viewport" , content="width=device-width, initial-scale=1.0" />
     <title>Flappy Bird</title>
     <link rel="stylesheet" href="flappybird.css" />
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="flappybird.js"></script>
   </head>
   <body>
-    <div id="start-screen">
-      <h1 class="game-title">VOICE CONTROLLED FLAPPY BIRD</h1>
+    <div id="signup-screen">
+      <h1 class="game-title">FLAPPY BIRD</h1>
+      <input
+        type="text"
+        id="username"
+        placeholder="Username"
+        class="game-input"
+      />
+      <input
+        type="email"
+        id="email"
+        placeholder="Email (optional)"
+        class="game-input"
+      />
+      <p id="signup-error" class="error-msg hidden"></p>
+      <button id="signup-btn">ENTER GAME</button>
+      <p id="auth-toggle">
+        Already have an account? <span class="action-link">Log In</span>
+      </p>
+    </div>
+
+    <div id="start-screen" class="hidden">
+      <div class="instructions">
+        <h2>HOW TO PLAY</h2>
+        <p>🎤 Make noise to FLY</p>
+        <p>🔊 Louder = Higher Jump</p>
+        <p>🤫 Quiet = Fall Down</p>
+      </div>
       <button id="play-btn">PLAY</button>
+      <button id="logout-btn" class="secondary-btn">LOGOUT</button>
     </div>
     <div id="game-over-screen" class="hidden">
       <h1 class="game-title">GAME OVER</h1>
       <p id="final-score">Score: 0</p>
       <button id="restart-btn">RESTART</button>
+      <button id="home-btn" class="secondary-btn">HOME</button>
+      <button id="logout-btn-gameover" class="secondary-btn">LOGOUT</button>
     </div>
     <canvas id="board"></canvas>
   </body>
