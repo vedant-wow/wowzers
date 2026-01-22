@@ -34,6 +34,7 @@ let velocityY = -4; //bird jump speed - starts with upward momentum
 let gravity = 0.3; // Balanced gravity for controllable gameplay
 
 let gameOver = false;
+let gameWon = false;
 let gameStarted = false; // Prevents the bird from falling until player is ready
 let score = 0;
 
@@ -216,6 +217,11 @@ window.onload = function () {
   const homeBtn = document.getElementById("home-btn");
   const logoutBtnGameover = document.getElementById("logout-btn-gameover");
 
+  const victoryScreen = document.getElementById("victory-screen");
+  const victoryRestartBtn = document.getElementById("victory-restart-btn");
+  const victoryHomeBtn = document.getElementById("victory-home-btn");
+  const victoryLogoutBtn = document.getElementById("victory-logout-btn");
+
   // State for Auth Mode
   let isLoginMode = false;
 
@@ -262,6 +268,7 @@ window.onload = function () {
     // Show Signup Screen
     startScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
+    victoryScreen.classList.add("hidden");
     leaderboardScreen.classList.add("hidden");
     signupScreen.classList.remove("hidden");
   }
@@ -277,6 +284,7 @@ window.onload = function () {
 
     // UI Transition
     gameOverScreen.classList.add("hidden");
+    victoryScreen.classList.add("hidden");
     leaderboardScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
   }
@@ -288,7 +296,19 @@ window.onload = function () {
   // 1. Navigation Buttons
   logoutBtn.addEventListener("click", logoutUser);
   logoutBtnGameover.addEventListener("click", logoutUser);
+  victoryLogoutBtn.addEventListener("click", logoutUser);
   homeBtn.addEventListener("click", goHome);
+  victoryHomeBtn.addEventListener("click", goHome);
+
+  victoryRestartBtn.addEventListener("click", function () {
+    resetGame();
+    victoryScreen.classList.add("hidden");
+
+    if (!gameStarted) {
+      gameStarted = true;
+      velocityY = -4;
+    }
+  });
 
   // Tab switching
   tabGames.addEventListener("click", function () {
@@ -630,15 +650,29 @@ function update() {
   context.textAlign = "left"; // Set alignment for score display
   context.fillText(score, 5, 45);
 
+  // Check for victory
+  if (!gameWon && score >= 30) {
+    handleVictory();
+  }
+
   if (gameOver) {
     // context.fillText("GAME OVER", 5, 90); // Removed in favor of screen
     const gameOverScreen = document.getElementById("game-over-screen");
+    const victoryScreen = document.getElementById("victory-screen"); // Ensure we have reference
     const finalScoreText = document.getElementById("final-score");
+    const victoryScoreText = document.getElementById("victory-score");
 
-    if (gameOverScreen.classList.contains("hidden")) {
-      // Update UI
-      finalScoreText.innerText = "Score: " + Math.floor(score);
-      gameOverScreen.classList.remove("hidden");
+    if (gameWon) {
+      if (victoryScreen.classList.contains("hidden")) {
+        victoryScoreText.innerText = "Score: " + Math.floor(score);
+        victoryScreen.classList.remove("hidden");
+      }
+    } else {
+      if (gameOverScreen.classList.contains("hidden")) {
+        // Update UI
+        finalScoreText.innerText = "Score: " + Math.floor(score);
+        gameOverScreen.classList.remove("hidden");
+      }
     }
   }
 }
@@ -725,10 +759,55 @@ function detectCollision(a, b) {
   ); //a's bottom left corner passes b's top left corner
 }
 
+function handleVictory() {
+  if (gameOver) return; // Prevent double firing
+  gameOver = true;
+  gameWon = true;
+
+  // Save score to Firebase
+  if (
+    db &&
+    currentUser &&
+    currentUser.id &&
+    !currentUser.id.startsWith("local_")
+  ) {
+    const finalScore = Math.floor(score);
+    console.log(
+      `Victory! Saving score ${finalScore} for user ${currentUser.username}`
+    );
+
+    // Save score
+    db.collection("scores")
+      .add({
+        userId: currentUser.id,
+        username: currentUser.username,
+        score: finalScore,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      })
+      .then(() => {
+        console.log("Victory score saved successfully!");
+      })
+      .catch((e) => {
+        console.error("Error saving victory score:", e);
+      });
+
+    // Update total games played user stat
+    db.collection("users")
+      .doc(currentUser.id)
+      .update({
+        totalGames: firebase.firestore.FieldValue.increment(1),
+      })
+      .catch((e) => {
+        console.error("Error updating totalGames:", e);
+      });
+  }
+}
+
 function resetGame() {
   bird.y = birdY;
   pipeArray = [];
   score = 0;
   gameOver = false;
+  gameWon = false;
   velocityY = -4;
 }

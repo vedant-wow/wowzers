@@ -19,7 +19,8 @@ body {
 #start-screen,
 #game-over-screen,
 #signup-screen,
-#leaderboard-screen {
+#leaderboard-screen,
+#victory-screen {
     position: absolute;
     width: 360px;
     height: 640px;
@@ -73,7 +74,8 @@ body {
 
 #play-btn,
 #restart-btn,
-#signup-btn {
+#signup-btn,
+#victory-restart-btn {
     font-family: 'Courier New', Courier, monospace;
     font-size: 30px;
     font-weight: bold;
@@ -154,7 +156,8 @@ body {
     background-color: #e86a4e;
 }
 
-#final-score {
+#final-score,
+#victory-score {
     font-size: 30px;
     color: white;
     text-shadow: 2px 2px 0 #000;
