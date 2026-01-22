@@ -37,7 +37,7 @@ let gameOver = false;
 let gameWon = false;
 let gameStarted = false; // Prevents the bird from falling until player is ready
 let score = 0;
-let victoryLevel = 30; // Score needed to win the game
+let victoryLevel = 2; // Score needed to win the game
 
 // confetti
 let confettiArray = [];
@@ -96,19 +96,14 @@ let audioInitPromise = null;
 // SFX & BGM
 let bgm = new Audio("./assets/SFX/bgm_mario.mp3");
 bgm.loop = true;
-bgm.volume = 0.1; // Low volume background music
+bgm.volume = 0.2; // Low volume background music
 let sfxWing = new Audio("./assets/SFX/sfx_wing.wav");
-sfxWing.volume = 0.1;
 let sfxPoint = new Audio("./assets/SFX/sfx_point.wav");
-sfxPoint.volume = 0.1;
 let sfxHit = new Audio("./assets/SFX/sfx_hit.wav");
-sfxHit.volume = 0.1;
 let sfxDie = new Audio("./assets/SFX/sfx_die.wav");
-sfxDie.volume = 0.1;
 let sfxSwooshing = new Audio("./assets/SFX/sfx_swooshing.wav");
-sfxSwooshing.volume = 0.1;
 let sfxWin = new Audio("./assets/SFX/win.mp3");
-sfxWin.volume = 0.1;
+sfxWin.volume = 0.2;
 let isMuted = false;
 
 function playSFX(audio) {
