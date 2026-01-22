@@ -51,10 +51,6 @@ window.onload = function () {
   board.width = boardWidth;
   context = board.getContext("2d"); //used for drawing on the board
 
-  //draw flappy bird
-  // context.fillStyle = "green";
-  // context.fillRect(bird.x, bird.y, bird.width, bird.height);
-
   //load images
   birdImg = new Image();
   birdImg.src = "./flappybird.png";
@@ -71,20 +67,34 @@ window.onload = function () {
   requestAnimationFrame(update);
   setInterval(placePipes, 2700); //every 2.7 seconds
 
-  // Click to initialize audio (required by browser policy) and reset game
-  document.addEventListener("click", function () {
+  // Play Button Interaction
+  const playBtn = document.getElementById("play-btn");
+  const startScreen = document.getElementById("start-screen");
+
+  // Game Over Interaction
+  const restartBtn = document.getElementById("restart-btn");
+  const gameOverScreen = document.getElementById("game-over-screen");
+
+  playBtn.addEventListener("click", function () {
     if (!audioInitialized) {
       initAudio();
     }
-    if (gameOver) {
-      bird.y = birdY;
-      pipeArray = [];
-      score = 0;
-      gameOver = false;
-      velocityY = -4; // Head start on restart
-    } else if (!gameStarted) {
+    // Start the game immediately
+    startScreen.classList.add("hidden");
+    if (!gameStarted) {
       gameStarted = true;
-      velocityY = -4; // Head start on first start
+      velocityY = -4; // Head start
+    }
+  });
+
+  restartBtn.addEventListener("click", function () {
+    resetGame();
+    gameOverScreen.classList.add("hidden");
+
+    // Ensure game starts immediately after restart
+    if (!gameStarted) {
+      gameStarted = true;
+      velocityY = -4;
     }
   });
 };
@@ -121,8 +131,6 @@ function update() {
     context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
     context.fillStyle = "white";
     context.font = "20px sans-serif";
-    context.textAlign = "center";
-    context.fillText("CLICK TO START", boardWidth / 2, boardHeight / 2 + 100);
     return;
   }
 
@@ -205,7 +213,13 @@ function update() {
   context.fillText(score, 5, 45);
 
   if (gameOver) {
-    context.fillText("GAME OVER", 5, 90);
+    const gameOverScreen = document.getElementById("game-over-screen");
+    const finalScoreText = document.getElementById("final-score");
+
+    if (gameOverScreen.classList.contains("hidden")) {
+      finalScoreText.innerText = "Score: " + Math.floor(score);
+      gameOverScreen.classList.remove("hidden");
+    }
   }
 }
 
@@ -241,9 +255,6 @@ function placePipes() {
   pipeArray.push(bottomPipe);
 }
 
-// Keyboard controls removed - now using voice activation
-// Click anywhere to start/reset the game
-
 function detectCollision(a, b) {
   return (
     a.x < b.x + b.width && //a's top left corner doesn't reach b's top right corner
@@ -251,4 +262,12 @@ function detectCollision(a, b) {
     a.y < b.y + b.height && //a's top left corner doesn't reach b's bottom left corner
     a.y + a.height > b.y
   ); //a's bottom left corner passes b's top left corner
+}
+
+function resetGame() {
+  bird.y = birdY;
+  pipeArray = [];
+  score = 0;
+  gameOver = false;
+  velocityY = -4;
 }
