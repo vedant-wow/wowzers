@@ -122,7 +122,9 @@ async function loadLeaderboards() {
         const data = doc.data();
         gamesHTML += `
           <li class="leaderboard-item">
-            <span class="lb-username">${data.username}</span>
+            <span class="lb-username" title="${data.username}">${
+          data.username
+        }</span>
             <span class="lb-value">${data.totalGames || 0} games</span>
           </li>
         `;
@@ -147,7 +149,7 @@ async function loadLeaderboards() {
         const data = doc.data();
         scoresHTML += `
           <li class="leaderboard-item">
-            <span class="lb-username">${data.username}</span>
+            <span class="lb-username" title="${data.username}">${data.username}</span>
             <span class="lb-value">${data.score} pts</span>
           </li>
         `;
