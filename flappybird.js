@@ -37,6 +37,7 @@ let gameOver = false;
 let gameWon = false;
 let gameStarted = false; // Prevents the bird from falling until player is ready
 let score = 0;
+let victoryLevel = 30; // Score needed to win the game
 
 // confetti
 let confettiArray = [];
@@ -89,6 +90,32 @@ let microphone;
 let dataArray;
 let bufferLength;
 let audioInitialized = false;
+let initializingAudio = false;
+let audioInitPromise = null;
+
+// SFX & BGM
+let bgm = new Audio("./assets/SFX/bgm_mario.mp3");
+bgm.loop = true;
+bgm.volume = 0.1; // Low volume background music
+let sfxWing = new Audio("./assets/SFX/sfx_wing.wav");
+sfxWing.volume = 0.1;
+let sfxPoint = new Audio("./assets/SFX/sfx_point.wav");
+sfxPoint.volume = 0.1;
+let sfxHit = new Audio("./assets/SFX/sfx_hit.wav");
+sfxHit.volume = 0.1;
+let sfxDie = new Audio("./assets/SFX/sfx_die.wav");
+sfxDie.volume = 0.1;
+let sfxSwooshing = new Audio("./assets/SFX/sfx_swooshing.wav");
+sfxSwooshing.volume = 0.1;
+let sfxWin = new Audio("./assets/SFX/win.mp3");
+sfxWin.volume = 0.1;
+let isMuted = false;
+
+function playSFX(audio) {
+  if (isMuted) return;
+  audio.currentTime = 0;
+  audio.play().catch((e) => console.log("SFX play error:", e));
+}
 
 // Firebase & User State
 let db;
@@ -221,16 +248,16 @@ window.onload = function () {
 
   //load images
   birdImg = new Image();
-  birdImg.src = "./flappybird.png";
+  birdImg.src = "./assets/Images/flappybird.png";
   birdImg.onload = function () {
     context.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
   };
 
   topPipeImg = new Image();
-  topPipeImg.src = "./toppipe.png";
+  topPipeImg.src = "./assets/Images/toppipe.png";
 
   bottomPipeImg = new Image();
-  bottomPipeImg.src = "./bottompipe.png";
+  bottomPipeImg.src = "./assets/Images/bottompipe.png";
 
   requestAnimationFrame(update);
   setInterval(placePipes, 2700); //every 2.7 seconds
@@ -246,6 +273,7 @@ window.onload = function () {
 
   const startScreen = document.getElementById("start-screen");
   const playBtn = document.getElementById("play-btn");
+  const muteBtn = document.getElementById("mute-btn");
   const logoutBtn = document.getElementById("logout-btn");
   const leaderboardBtn = document.getElementById("leaderboard-btn");
 
@@ -311,6 +339,11 @@ window.onload = function () {
     pipeArray = [];
     bird.y = birdY;
 
+    bgm.pause();
+    bgm.currentTime = 0;
+    sfxWin.pause();
+    sfxWin.currentTime = 0;
+
     // Show Signup Screen
     startScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
@@ -330,6 +363,11 @@ window.onload = function () {
     bird.y = birdY;
     velocityY = -4;
 
+    bgm.pause();
+    bgm.currentTime = 0;
+    sfxWin.pause();
+    sfxWin.currentTime = 0;
+
     // UI Transition
     gameOverScreen.classList.add("hidden");
     victoryScreen.classList.add("hidden");
@@ -338,6 +376,13 @@ window.onload = function () {
   }
 
   // --- Event Listeners ---
+
+  // 0. Toggle Sound
+  muteBtn.addEventListener("click", function () {
+    isMuted = !isMuted;
+    bgm.muted = isMuted;
+    muteBtn.innerText = isMuted ? "🔇" : "🔊";
+  });
 
   // 0. Toggle Auth Mode
   authActionLink.addEventListener("click", toggleAuthMode);
@@ -559,18 +604,39 @@ window.onload = function () {
     // Transition to Start Screen
     signupScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
-  });
 
-  // 2. Play Game
-  playBtn.addEventListener("click", function () {
+    // Proactively initialize audio so permission is asked before clicking PLAY
     if (!audioInitialized) {
       initAudio();
     }
-    // Start the game immediately
-    startScreen.classList.add("hidden");
-    if (!gameStarted) {
-      gameStarted = true;
-      velocityY = -4; // Head start
+  });
+
+  // 2. Play Game
+  playBtn.addEventListener("click", async function () {
+    if (!audioInitialized) {
+      const originalText = playBtn.innerText;
+      playBtn.innerText = "WAITING FOR MIC...";
+      playBtn.disabled = true;
+
+      await initAudio();
+
+      playBtn.innerText = originalText;
+      playBtn.disabled = false;
+    }
+
+    if (audioInitialized) {
+      bgm.currentTime = 0;
+      bgm.play().catch((e) => console.log("BGM play error:", e));
+
+      // Start the game immediately
+      startScreen.classList.add("hidden");
+      if (!gameStarted) {
+        gameStarted = true;
+        velocityY = -4; // Head start
+      }
+    } else {
+      // If audio failed to initialize, don't start the game
+      console.log("Audio not initialized. Game will not start.");
     }
   });
 
@@ -588,23 +654,35 @@ window.onload = function () {
 };
 
 async function initAudio() {
-  try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
-    bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
+  if (audioInitialized) return;
+  if (audioInitPromise) return audioInitPromise;
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    microphone = audioContext.createMediaStreamSource(stream);
-    microphone.connect(analyser);
+  audioInitPromise = (async () => {
+    initializingAudio = true;
+    try {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      bufferLength = analyser.frequencyBinCount;
+      dataArray = new Uint8Array(bufferLength);
 
-    audioInitialized = true;
-    console.log("Audio initialized successfully!");
-  } catch (err) {
-    console.error("Error accessing microphone:", err);
-    alert("Please allow microphone access to use voice control!");
-  }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      microphone = audioContext.createMediaStreamSource(stream);
+      microphone.connect(analyser);
+
+      audioInitialized = true;
+      bgm.play().catch((e) => console.log("BGM play error:", e));
+      console.log("Audio initialized successfully!");
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Please allow microphone access to use voice control!");
+    } finally {
+      initializingAudio = false;
+      audioInitPromise = null;
+    }
+  })();
+
+  return audioInitPromise;
 }
 
 function update() {
@@ -679,6 +757,7 @@ function update() {
       let sharpnessMultiplier = 0.8 + sharpness * 0.6;
       // Apply voice-controlled jump (direct, no smoothing)
       velocityY = baseForce * sharpnessMultiplier;
+      playSFX(sfxWing);
     }
   }
 
@@ -700,6 +779,9 @@ function update() {
     if (!pipe.passed && bird.x > pipe.x + pipe.width) {
       score += 0.5; //0.5 because there are 2 pipes! so 0.5*2 = 1, 1 for each set of pipes
       pipe.passed = true;
+      if (score % 1 === 0) {
+        playSFX(sfxPoint);
+      }
     }
 
     if (detectCollision(bird, pipe)) {
@@ -719,7 +801,7 @@ function update() {
   context.fillText(score, 5, 45);
 
   // Check for victory
-  if (!gameWon && score >= 30) {
+  if (!gameWon && score >= victoryLevel) {
     handleVictory();
   }
 
@@ -748,6 +830,9 @@ function update() {
 function handleGameOver() {
   if (gameOver) return; // Prevent double firing
   gameOver = true;
+  bgm.pause();
+  playSFX(sfxHit);
+  setTimeout(() => playSFX(sfxDie), 500);
 
   // Save score to Firebase
   if (
@@ -831,6 +916,8 @@ function handleVictory() {
   if (gameOver) return; // Prevent double firing
   gameOver = true;
   gameWon = true;
+  bgm.pause();
+  playSFX(sfxWin);
   initConfetti();
 
   // Save score to Firebase
@@ -880,4 +967,8 @@ function resetGame() {
   gameWon = false;
   velocityY = -4;
   confettiArray = [];
+  bgm.currentTime = 0;
+  bgm.play().catch((e) => console.log("BGM restart error:", e));
+  sfxWin.pause();
+  sfxWin.currentTime = 0;
 }
