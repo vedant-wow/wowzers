@@ -327,6 +327,7 @@ window.onload = function () {
         .addEventListener("click", toggleAuthMode);
     }
   }
+  toggleAuthMode(); // Set default mode to Login
 
   function logoutUser() {
     currentUser = null;
