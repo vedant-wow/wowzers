@@ -1,4 +1,4 @@
-// Type definitions for the game
+// Type definitions
 
 export type Position = {
   x: number;

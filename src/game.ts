@@ -1,5 +1,3 @@
-// Game engine - functional approach
-
 import { GAME_CONFIG, IMAGE_PATHS, CONFETTI_COLORS } from "./config";
 import { detectCollision } from "./utils";
 import type { GameState, Pipe, Confetti } from "./types";

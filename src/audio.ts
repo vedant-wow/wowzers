@@ -1,5 +1,3 @@
-// Audio management - functional approach
-
 import { AUDIO_CONFIG, AUDIO_PATHS } from "./config";
 import type { AudioState } from "./types";
 

@@ -1,5 +1,3 @@
-// Main application entry point - functional approach
-
 import { GAME_CONFIG } from "./config";
 import * as firebase from "./firebase";
 import * as game from "./game";

@@ -1,5 +1,3 @@
-// UI management - functional approach
-
 import { debounce } from "./utils";
 import * as firebase from "./firebase";
 import * as audio from "./audio";
