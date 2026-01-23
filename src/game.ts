@@ -19,6 +19,7 @@ export const gameState: GameState = {
   gameStarted: false,
   gameOver: false,
   gameWon: false,
+  crashLocation: null,
 };
 
 // Canvas and images
@@ -27,6 +28,7 @@ let ctx: CanvasRenderingContext2D;
 let birdImg: HTMLImageElement;
 let topPipeImg: HTMLImageElement;
 let bottomPipeImg: HTMLImageElement;
+let tryAgainImg: HTMLImageElement;
 
 // Intervals
 let pipeInterval: number | null = null;
@@ -54,6 +56,9 @@ export function initGame(canvasElement: HTMLCanvasElement): void {
 
   bottomPipeImg = new Image();
   bottomPipeImg.src = IMAGE_PATHS.bottomPipe;
+
+  tryAgainImg = new Image();
+  tryAgainImg.src = IMAGE_PATHS.tryAgain;
 }
 
 export function startGame(): void {
@@ -89,6 +94,7 @@ export function resetGame(): void {
   gameState.gameOver = false;
   gameState.gameWon = false;
   gameState.gameStarted = false;
+  gameState.crashLocation = null;
 
   if (pipeInterval) {
     clearInterval(pipeInterval);
@@ -111,58 +117,67 @@ export function stopGame(): void {
 function update(): void {
   animationFrameId = requestAnimationFrame(update);
 
-  if (gameState.gameOver && !gameState.gameWon) {
-    return;
-  }
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Victory state
-  if (gameState.gameWon) {
-    ctx.drawImage(
-      birdImg,
-      gameState.bird.x,
-      gameState.bird.y,
-      gameState.bird.width,
-      gameState.bird.height
-    );
+  // --- Update Logic ---
+  const isActive = gameState.gameStarted && !gameState.gameOver;
 
-    for (const pipe of gameState.pipes) {
-      ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+  if (isActive) {
+    // Process voice input
+    const voiceInput = audio.getVoiceInput();
+    if (voiceInput) {
+      const VOLUME_THRESHOLD = 0.2;
+      if (voiceInput.volume > VOLUME_THRESHOLD) {
+        const baseForce = -4;
+        const sharpnessMultiplier = 0.8 + voiceInput.sharpness * 0.6;
+        gameState.bird.velocity = baseForce * sharpnessMultiplier;
+        audio.playSFX(audio.sfxWing);
+      }
     }
 
-    updateAndDrawConfetti();
-    return;
-  }
+    // Update bird physics
+    gameState.bird.velocity += GAME_CONFIG.gravity;
+    gameState.bird.y = Math.max(gameState.bird.y + gameState.bird.velocity, 0);
 
-  // Not started
-  if (!gameState.gameStarted) {
-    ctx.drawImage(
-      birdImg,
-      gameState.bird.x,
-      gameState.bird.y,
-      gameState.bird.width,
-      gameState.bird.height
-    );
-    return;
-  }
+    // Check if bird fell off screen
+    if (gameState.bird.y > canvas.height) {
+      handleGameOver();
+    }
 
-  // Process voice input
-  const voiceInput = audio.getVoiceInput();
-  if (voiceInput) {
-    const VOLUME_THRESHOLD = 0.2;
+    // Update pipes physics and collision
+    for (let i = gameState.pipes.length - 1; i >= 0; i--) {
+      const pipe = gameState.pipes[i];
+      pipe.x += GAME_CONFIG.velocityX;
 
-    if (voiceInput.volume > VOLUME_THRESHOLD) {
-      const baseForce = -4;
-      const sharpnessMultiplier = 0.8 + voiceInput.sharpness * 0.6;
-      gameState.bird.velocity = baseForce * sharpnessMultiplier;
-      audio.playSFX(audio.sfxWing);
+      // Score when passing pipe
+      if (!pipe.passed && gameState.bird.x > pipe.x + pipe.width) {
+        gameState.score += 0.5;
+        pipe.passed = true;
+        if (gameState.score % 1 === 0) {
+          audio.playSFX(audio.sfxPoint);
+        }
+      }
+
+      // Collision detection
+      if (detectCollision(gameState.bird, pipe)) {
+        handleGameOver();
+      }
+
+      // Remove off-screen pipes
+      if (pipe.x < -GAME_CONFIG.pipeWidth) {
+        gameState.pipes.splice(i, 1);
+      }
+    }
+
+    // Check for victory
+    if (!gameState.gameWon && gameState.score >= GAME_CONFIG.victoryLevel) {
+      handleVictory();
     }
   }
 
-  // Update bird
-  gameState.bird.velocity += GAME_CONFIG.gravity;
-  gameState.bird.y = Math.max(gameState.bird.y + gameState.bird.velocity, 0);
+  // --- Render Logic ---
+
+  // 1. Draw bird
   ctx.drawImage(
     birdImg,
     gameState.bird.x,
@@ -171,46 +186,34 @@ function update(): void {
     gameState.bird.height
   );
 
-  // Check if bird fell off screen
-  if (gameState.bird.y > canvas.height) {
-    handleGameOver();
-  }
-
-  // Update pipes
-  for (let i = gameState.pipes.length - 1; i >= 0; i--) {
-    const pipe = gameState.pipes[i];
-    pipe.x += GAME_CONFIG.velocityX;
+  // 2. Draw pipes
+  for (const pipe of gameState.pipes) {
     ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
-
-    // Score when passing pipe
-    if (!pipe.passed && gameState.bird.x > pipe.x + pipe.width) {
-      gameState.score += 0.5;
-      pipe.passed = true;
-      if (gameState.score % 1 === 0) {
-        audio.playSFX(audio.sfxPoint);
-      }
-    }
-
-    // Collision detection
-    if (detectCollision(gameState.bird, pipe)) {
-      handleGameOver();
-    }
-
-    // Remove off-screen pipes
-    if (pipe.x < -GAME_CONFIG.pipeWidth) {
-      gameState.pipes.splice(i, 1);
-    }
   }
 
-  // Draw score
-  ctx.fillStyle = "white";
-  ctx.font = "45px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText(gameState.score.toString(), 5, 45);
+  // 3. Draw score (if game has started or just ended)
+  if (gameState.gameStarted || gameState.gameOver) {
+    ctx.fillStyle = "white";
+    ctx.font = "45px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(Math.floor(gameState.score).toString(), 5, 45);
+  }
 
-  // Check for victory
-  if (!gameState.gameWon && gameState.score >= GAME_CONFIG.victoryLevel) {
-    handleVictory();
+  // 4. Draw overlays
+  if (gameState.gameWon) {
+    updateAndDrawConfetti();
+  } else if (gameState.gameOver && gameState.crashLocation) {
+    const splashSize = 160;
+    ctx.drawImage(
+      tryAgainImg,
+      gameState.crashLocation.x + gameState.bird.width / 2 - splashSize / 2,
+      gameState.crashLocation.y +
+        gameState.bird.height / 2 -
+        splashSize / 2 -
+        20, // Offset up slightly
+      splashSize,
+      splashSize
+    );
   }
 }
 
@@ -248,6 +251,7 @@ function handleGameOver(): void {
   if (gameState.gameOver) return;
 
   gameState.gameOver = true;
+  gameState.crashLocation = { x: gameState.bird.x, y: gameState.bird.y };
   audio.pauseBGM();
   audio.playSFX(audio.sfxHit);
   setTimeout(() => audio.playSFX(audio.sfxDie), 500);

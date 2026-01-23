@@ -10,7 +10,7 @@ export const GAME_CONFIG = {
   gravity: 0.3,
   velocityX: -2,
   initialVelocityY: -4,
-  victoryLevel: 30,
+  victoryLevel: 5,
 };
 
 export const AUDIO_CONFIG = {
@@ -52,4 +52,6 @@ export const IMAGE_PATHS = {
   topPipe: "./Images/toppipe.png",
   bottomPipe: "./Images/bottompipe.png",
   background: "./Images/flappybirdbg.png",
+  tryAgain: "./Images/tryAgain.png",
+  win: "./Images/win.png",
 };

@@ -1,3 +1,7 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Courier New', Courier, monospace;
     text-align: center;
@@ -16,46 +20,117 @@ body {
     display: block;
 }
 
-#start-screen,
-#game-over-screen,
 #signup-screen,
-#leaderboard-screen {
-    position: absolute;
-    width: 360px;
-    height: 640px;
-    background-image: url("./Images/flappybirdbg.png");
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-    overflow-y: auto;
-}
-
+#start-screen,
+#leaderboard-screen,
+#game-over-screen,
 #victory-screen {
     position: absolute;
     width: 360px;
     height: 640px;
-    background-color: rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 100;
-    overflow-y: auto;
+    overflow: hidden;
+}
+
+#signup-screen,
+#start-screen,
+#leaderboard-screen {
+    background-image: url("./Images/flappybirdbg.png");
+}
+
+#game-over-screen,
+#victory-screen {
+    background-color: rgba(0, 0, 0, 0);
+    /* Even more subtle dimming */
+    justify-content: space-between;
+    padding: 40px 0;
+}
+
+/* Grouping buttons at the bottom */
+#game-over-screen button:last-child,
+#victory-screen button:last-child {
+    margin-bottom: 20px;
+}
+
+#game-over-screen::before,
+#victory-screen::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("./Images/flappybirdbg.png");
+    opacity: 0.1;
+    z-index: -1;
 }
 
 .game-title {
-    font-size: 50px;
+    font-size: 48px;
     color: white;
     text-shadow:
         -2px -2px 0 #000,
         2px -2px 0 #000,
         -2px 2px 0 #000,
-        2px 2px 0 #000;
-    margin-bottom: 20px;
+        -2px 2px 0 #000;
+    margin-top: 0;
+    margin-bottom: 15px;
     line-height: 1.1;
-    animation: titlePulse 2s infinite ease-in-out;
+}
+
+#game-over-screen .game-title,
+#victory-screen .game-title {
+    margin-top: 20px;
+    margin-bottom: 0px;
+}
+
+#final-score,
+#victory-score {
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1.2px 1.2px 0 #000;
+    margin: 5px 0 auto 0;
+    /* 'auto' bottom margin pushes subsequent elements (buttons) to the bottom */
+}
+
+.leaderboard-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.trophy-img {
+    width: 45px;
+    height: auto;
+    margin-top: 15px;
+    margin-bottom: 0;
+}
+
+.victory-trophy-img {
+    width: 120px;
+    height: auto;
+    margin-bottom: 0px;
+    margin-top: 20px;
+    filter: drop-shadow(0 0 15px rgba(224, 172, 26, 0.8));
+    animation: trophyBounce 2s infinite ease-in-out;
+}
+
+@keyframes trophyBounce {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(5deg);
+    }
 }
 
 @keyframes titlePulse {
@@ -72,9 +147,9 @@ body {
 
 .instructions {
     color: white;
-    font-size: 20px;
+    font-size: 17px;
     margin-bottom: 20px;
-    text-shadow: 2px 2px 0 #000;
+    text-shadow: 1.2px 1.2px 0 #000;
     background-color: rgba(0, 0, 0, 0.6);
     padding: 20px;
     border-radius: 10px;
@@ -102,47 +177,43 @@ body {
 #signup-btn,
 #victory-restart-btn {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 30px;
+    font-size: 24px;
     font-weight: bold;
-    padding: 15px 40px;
+    padding: 12px 35px;
     background-color: #e0ac1a;
-    border: 4px solid white;
+    border: 3px solid white;
     color: white;
     text-shadow: 1px 1px 0 #000;
     cursor: pointer;
     box-shadow: 0 4px 0 #b38b15;
     transition: transform 0.1s, box-shadow 0.1s;
-    margin-top: 10px;
+    margin: 5px 0;
+    width: 220px;
+}
+
+.secondary-btn,
+.tertiary-btn {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 8px 20px;
+    border: 3px solid white;
+    color: white;
+    text-shadow: 1px 1px 0 #000;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    margin: 5px 0;
+    width: 200px;
 }
 
 .secondary-btn {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 8px 20px;
     background-color: #dc5639;
-    border: 3px solid white;
-    color: white;
-    text-shadow: 1px 1px 0 #000;
-    cursor: pointer;
     box-shadow: 0 3px 0 #9e3e29;
-    transition: transform 0.1s, box-shadow 0.1s;
-    margin-top: 15px;
 }
 
 .tertiary-btn {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 8px 20px;
     background-color: #2f6f73;
-    border: 3px solid white;
-    color: white;
-    text-shadow: 1px 1px 0 #000;
-    cursor: pointer;
     box-shadow: 0 3px 0 #1f4f52;
-    transition: transform 0.1s, box-shadow 0.1s, background-color 0.1s;
-    margin-top: 15px;
 }
 
 .tertiary-btn:hover {
@@ -188,13 +259,7 @@ button:disabled {
     transform: none !important;
 }
 
-#final-score,
-#victory-score {
-    font-size: 30px;
-    color: white;
-    text-shadow: 2px 2px 0 #000;
-    margin: 10px 0;
-}
+/* Score styling handled in top section to avoid clutter */
 
 .game-input {
     font-family: 'Courier New', Courier, monospace;
@@ -249,8 +314,7 @@ button:disabled {
 
 /* Leaderboard Styles */
 #leaderboard-screen {
-    padding: 15px 20px;
-    overflow-y: auto;
+    padding: 20px;
 }
 
 .leaderboard-tabs {
@@ -310,8 +374,10 @@ button:disabled {
     background-color: rgba(0, 0, 0, 0.7);
     border: 3px solid white;
     border-radius: 10px;
-    padding: 15px;
+    padding: 10px;
     overflow-y: auto;
+    height: 320px;
+    /* Fixed height to prevent screen expansion */
 }
 
 .leaderboard-list {

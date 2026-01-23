@@ -47,6 +47,7 @@ export type GameState = {
   gameStarted: boolean;
   gameOver: boolean;
   gameWon: boolean;
+  crashLocation: Position | null;
 };
 
 export type AudioState = {

@@ -46,7 +46,10 @@
 
     <!-- Leaderboard Screen -->
     <div id="leaderboard-screen" class="hidden">
-      <h1 class="game-title">🏆LEADERBOARD</h1>
+      <div class="leaderboard-header">
+        <img src="./Images/win.png" alt="Trophy" class="trophy-img" />
+        <h1 class="game-title">LEADERBOARD</h1>
+      </div>
 
       <div class="leaderboard-tabs">
         <button id="tab-games" class="tab-btn active">
@@ -82,6 +85,11 @@
 
     <!-- Victory Screen -->
     <div id="victory-screen" class="hidden">
+      <img
+        src="./Images/win.png"
+        alt="Victory Trophy"
+        class="victory-trophy-img"
+      />
       <h1 class="game-title">Wow! <br />You Won</h1>
       <p id="victory-score">Score: 30</p>
       <button id="victory-restart-btn">PLAY AGAIN</button>
