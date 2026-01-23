@@ -1,13 +1,110 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport", content="width=device-width, initial-scale=1.0">
-        <title>Flappy Bird</title>
-        <link rel="stylesheet" href="flappybird.css">
-        <script src="flappybird.js"></script>
-    </head>
-    <body>
-        <canvas id="board"></canvas>
-    </body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wowbie - Voice Controlled Flappy Bird</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" href="./Images/flappybird.png" type="image/x-icon" />
+  </head>
+  <body>
+    <!-- Login Screen -->
+    <div id="signup-screen">
+      <h1 class="game-title">WOWBIE</h1>
+      <input
+        type="text"
+        id="username"
+        placeholder="Username"
+        class="game-input"
+      />
+      <input
+        type="email"
+        id="email"
+        placeholder="Email (optional)"
+        class="game-input hidden"
+      />
+      <p id="signup-error" class="error-msg hidden"></p>
+      <button id="signup-btn">LOGIN</button>
+      <p id="auth-toggle">
+        New player? <span class="action-link">Sign Up</span>
+      </p>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="hidden">
+      <button id="mute-btn" class="mute-btn">🔊</button>
+      <button id="leaderboard-btn" class="tertiary-btn">🏆 LEADERBOARD</button>
+      <div class="instructions">
+        <h2>HOW TO PLAY</h2>
+        <p>🎤 Make noise to FLY</p>
+        <p>🔊 Louder = Higher Jump</p>
+        <p>🤫 Quiet = Fall Down</p>
+      </div>
+      <button id="play-btn">PLAY</button>
+      <button id="logout-btn" class="secondary-btn">LOGOUT</button>
+    </div>
+
+    <!-- Leaderboard Screen -->
+    <div id="leaderboard-screen" class="hidden">
+      <div class="leaderboard-header">
+        <img src="./Images/win.png" alt="Trophy" class="trophy-img" />
+        <h1 class="game-title">LEADERBOARD</h1>
+      </div>
+
+      <div class="leaderboard-tabs">
+        <button id="tab-games" class="tab-btn active">
+          Most<br />
+          Games
+        </button>
+        <button id="tab-scores" class="tab-btn">High Scores</button>
+      </div>
+
+      <div id="tab-content-games" class="tab-content active">
+        <div id="most-games-list" class="leaderboard-container">
+          <p class="loading-text">Loading...</p>
+        </div>
+      </div>
+
+      <div id="tab-content-scores" class="tab-content hidden">
+        <div id="highest-score-list" class="leaderboard-container">
+          <p class="loading-text">Loading...</p>
+        </div>
+      </div>
+
+      <button id="back-btn" class="secondary-btn">← BACK</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="hidden">
+      <div class="game-over-content">
+        <h1 class="game-title">GAME OVER</h1>
+        <p id="final-score">Score: 0</p>
+        <button id="restart-btn">RESTART</button>
+        <button id="home-btn" class="tertiary-btn">HOME</button>
+        <button id="logout-btn-gameover" class="secondary-btn">LOGOUT</button>
+      </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="hidden">
+      <div class="game-over-content">
+        <img
+          src="./Images/win.png"
+          alt="Victory Trophy"
+          class="victory-trophy-img"
+        />
+        <h1 class="game-title">Wow! <br />You Won</h1>
+        <p id="victory-score">Score: 30</p>
+        <button id="victory-restart-btn">PLAY AGAIN</button>
+        <button id="victory-home-btn" class="tertiary-btn">HOME</button>
+        <button id="victory-logout-btn" class="secondary-btn">LOGOUT</button>
+      </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="board"></canvas>
+
+    <!-- Main TypeScript Module -->
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
