@@ -38,20 +38,20 @@ export const CONFETTI_COLORS = [
 ];
 
 export const AUDIO_PATHS = {
-  bgm: "./SFX/bgm_mario.mp3",
-  wing: "./SFX/sfx_wing.wav",
-  point: "./SFX/sfx_point.wav",
-  hit: "./SFX/sfx_hit.wav",
-  die: "./SFX/sfx_die.wav",
-  swooshing: "./SFX/sfx_swooshing.wav",
-  win: "./SFX/win.mp3",
+  bgm: "/SFX/bgm_mario.mp3",
+  wing: "/SFX/sfx_wing.wav",
+  point: "/SFX/sfx_point.wav",
+  hit: "/SFX/sfx_hit.wav",
+  die: "/SFX/sfx_die.wav",
+  swooshing: "/SFX/sfx_swooshing.wav",
+  win: "/SFX/win.mp3",
 };
 
 export const IMAGE_PATHS = {
-  bird: "./Images/flappybird.png",
-  topPipe: "./Images/toppipe.png",
-  bottomPipe: "./Images/bottompipe.png",
-  background: "./Images/flappybirdbg.png",
-  tryAgain: "./Images/tryAgain.png",
-  win: "./Images/win.png",
+  bird: "/Images/flappybird.png",
+  topPipe: "/Images/toppipe.png",
+  bottomPipe: "/Images/bottompipe.png",
+  background: "/Images/flappybirdbg.png",
+  tryAgain: "/Images/tryAgain.png",
+  win: "/Images/win.png",
 };
