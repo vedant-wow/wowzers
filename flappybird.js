@@ -290,11 +290,11 @@ window.onload = function () {
   const victoryLogoutBtn = document.getElementById("victory-logout-btn");
 
   // State for Auth Mode
-  let isLoginMode = false;
+  let isLoginMode = true;
 
   // --- Helper Functions ---
-  function toggleAuthMode() {
-    isLoginMode = !isLoginMode;
+  function setAuthMode(loginMode) {
+    isLoginMode = loginMode;
 
     // Reset Inputs/Errors
     signupError.classList.add("hidden");
@@ -308,21 +308,23 @@ window.onload = function () {
       emailInput.classList.add("hidden"); // Hide email for login
       signupBtn.innerText = "LOGIN";
       authToggle.innerHTML = `New player? <span class="action-link">Sign Up</span>`;
-      // Re-attach listener to new span
-      authToggle
-        .querySelector(".action-link")
-        .addEventListener("click", toggleAuthMode);
     } else {
       // Switch to Signup UI
       emailInput.classList.remove("hidden");
       signupBtn.innerText = "ENTER GAME";
       authToggle.innerHTML = `Already have an account? <span class="action-link">Log In</span>`;
-      authToggle
-        .querySelector(".action-link")
-        .addEventListener("click", toggleAuthMode);
     }
+
+    // Re-attach listener to the new span created by innerHTML
+    authToggle
+      .querySelector(".action-link")
+      .addEventListener("click", toggleAuthMode);
   }
-  toggleAuthMode(); // Set default mode to Login
+
+  function toggleAuthMode() {
+    setAuthMode(!isLoginMode);
+  }
+  // toggleAuthMode(); // Set default mode to Login - Removed to prevent flicker as HTML now defaults to Login UI
 
   function logoutUser() {
     currentUser = null;
@@ -340,7 +342,8 @@ window.onload = function () {
     sfxWin.pause();
     sfxWin.currentTime = 0;
 
-    // Show Signup Screen
+    // Show Login Screen
+    setAuthMode(true);
     startScreen.classList.add("hidden");
     gameOverScreen.classList.add("hidden");
     victoryScreen.classList.add("hidden");
@@ -430,71 +433,94 @@ window.onload = function () {
     startScreen.classList.remove("hidden");
   });
 
-  usernameInput.addEventListener(
-    "input",
-    debounce(async function () {
-      const username = usernameInput.value.trim();
+  // Create the debounced check function
+  const checkUsername = debounce(async function () {
+    const username = usernameInput.value.trim();
 
-      // Reset state
-      signupError.classList.add("hidden");
+    if (!username) {
       signupBtn.disabled = false;
-      isUsernameValid = false;
+      return;
+    }
 
-      if (!username) return;
+    if (db) {
+      usernameCheckInProgress = true;
+      signupError.innerText = "Checking...";
+      signupError.classList.remove("hidden");
+      signupError.classList.remove("success-msg");
+      signupBtn.disabled = true;
 
-      if (db) {
-        usernameCheckInProgress = true;
+      try {
+        const snapshot = await db
+          .collection("users")
+          .where("username", "==", username)
+          .get();
+        const userExists = !snapshot.empty;
 
-        try {
-          const snapshot = await db
-            .collection("users")
-            .where("username", "==", username)
-            .get();
-          const userExists = !snapshot.empty;
-
-          if (isLoginMode) {
-            // LOGIN MODE: Valid if user EXISTS
-            if (!userExists) {
-              signupError.innerText = "User not found";
-              signupError.classList.remove("hidden");
-              signupError.classList.remove("success-msg");
-              isUsernameValid = false;
-            } else {
-              isUsernameValid = true;
-              signupError.innerText = "Welcome back!";
-              signupError.classList.add("success-msg");
-              signupError.classList.remove("hidden");
-
-              // Store user data for login
-              const doc = snapshot.docs[0];
-              currentUser = { id: doc.id, ...doc.data() };
-            }
+        if (isLoginMode) {
+          // LOGIN MODE: Valid if user EXISTS
+          if (!userExists) {
+            signupError.innerText = "User not found";
+            signupError.classList.remove("hidden");
+            signupError.classList.remove("success-msg");
+            isUsernameValid = false;
+            signupBtn.disabled = true;
           } else {
-            // SIGNUP MODE: Valid if user DOES NOT EXIST
-            if (userExists) {
-              signupError.innerText = "This username is already taken";
-              signupError.classList.remove("hidden");
-              signupError.classList.remove("success-msg");
-              isUsernameValid = false;
-            } else {
-              isUsernameValid = true;
-              signupError.innerText = "Username available!";
-              signupError.classList.add("success-msg");
-              signupError.classList.remove("hidden");
-            }
+            isUsernameValid = true;
+            signupError.innerText = "Welcome back!";
+            signupError.classList.add("success-msg");
+            signupError.classList.remove("hidden");
+            signupBtn.disabled = false;
+
+            // Store user data for login
+            const doc = snapshot.docs[0];
+            currentUser = { id: doc.id, ...doc.data() };
           }
-        } catch (e) {
-          console.error("Check username error:", e);
-          isUsernameValid = true;
-        } finally {
-          usernameCheckInProgress = false;
+        } else {
+          // SIGNUP MODE: Valid if user DOES NOT EXIST
+          if (userExists) {
+            signupError.innerText = "This username is already taken";
+            signupError.classList.remove("hidden");
+            signupError.classList.remove("success-msg");
+            isUsernameValid = false;
+            signupBtn.disabled = true;
+          } else {
+            isUsernameValid = true;
+            signupError.innerText = "Username available!";
+            signupError.classList.add("success-msg");
+            signupError.classList.remove("hidden");
+            signupBtn.disabled = false;
+          }
         }
-      } else {
-        // Offline mode - assume valid
+      } catch (e) {
+        console.error("Check username error:", e);
+        // On error, let them try to submit anyway or stay disabled?
+        // Let's allow it but log error
         isUsernameValid = true;
+        signupBtn.disabled = false;
+      } finally {
+        usernameCheckInProgress = false;
       }
-    }, 500)
-  );
+    } else {
+      // Offline mode - assume valid
+      isUsernameValid = true;
+      signupBtn.disabled = false;
+    }
+  }, 500);
+
+  usernameInput.addEventListener("input", function () {
+    const username = usernameInput.value.trim();
+
+    // Immediately disable and hide state while typing/debouncing
+    signupBtn.disabled = true;
+    signupError.classList.add("hidden");
+    isUsernameValid = false;
+
+    if (username) {
+      checkUsername();
+    } else {
+      signupBtn.disabled = false; // Re-enable if cleared
+    }
+  });
 
   // 3. Login / Sign Up Action
   signupBtn.addEventListener("click", async function () {
