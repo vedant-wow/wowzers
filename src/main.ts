@@ -26,16 +26,28 @@ function init(): void {
   startGameStateMonitor();
 }
 
+let isUIThresholdMet = false;
+
 function startGameStateMonitor(): void {
   setInterval(() => {
-    if (game.isGameOver()) {
+    if (game.isGameOver() && !isUIThresholdMet) {
+      isUIThresholdMet = true;
       const score = game.getScore();
 
       if (game.isVictory()) {
         ui.showVictory(score);
       } else {
-        ui.showGameOver(score);
+        // Delay Game Over screen to show splash first
+        setTimeout(() => {
+          game.hideSplash();
+          ui.showGameOver(score);
+        }, 2000);
       }
+    }
+
+    // Reset monitor flag if game is restarted
+    if (!game.isGameOver()) {
+      isUIThresholdMet = false;
     }
   }, 100);
 }

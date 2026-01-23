@@ -20,6 +20,7 @@ export const gameState: GameState = {
   gameOver: false,
   gameWon: false,
   crashLocation: null,
+  showSplash: false,
 };
 
 // Canvas and images
@@ -95,6 +96,7 @@ export function resetGame(): void {
   gameState.gameWon = false;
   gameState.gameStarted = false;
   gameState.crashLocation = null;
+  gameState.showSplash = false;
 
   if (pipeInterval) {
     clearInterval(pipeInterval);
@@ -202,7 +204,11 @@ function update(): void {
   // 4. Draw overlays
   if (gameState.gameWon) {
     updateAndDrawConfetti();
-  } else if (gameState.gameOver && gameState.crashLocation) {
+  } else if (
+    gameState.gameOver &&
+    gameState.crashLocation &&
+    gameState.showSplash
+  ) {
     const splashSize = 160;
     ctx.drawImage(
       tryAgainImg,
@@ -251,6 +257,7 @@ function handleGameOver(): void {
   if (gameState.gameOver) return;
 
   gameState.gameOver = true;
+  gameState.showSplash = true;
   gameState.crashLocation = { x: gameState.bird.x, y: gameState.bird.y };
   audio.pauseBGM();
   audio.playSFX(audio.sfxHit);
@@ -262,6 +269,10 @@ function handleGameOver(): void {
     clearInterval(pipeInterval);
     pipeInterval = null;
   }
+}
+
+export function hideSplash(): void {
+  gameState.showSplash = false;
 }
 
 function handleVictory(): void {

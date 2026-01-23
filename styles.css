@@ -44,10 +44,17 @@ body {
 
 #game-over-screen,
 #victory-screen {
-    background-color: rgba(0, 0, 0, 0);
-    /* Even more subtle dimming */
-    justify-content: space-between;
-    padding: 40px 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    padding: 20px;
+    transition: opacity 0.5s ease-in;
+}
+
+.game-over-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
 /* Grouping buttons at the bottom */
@@ -56,18 +63,7 @@ body {
     margin-bottom: 20px;
 }
 
-#game-over-screen::before,
-#victory-screen::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("./Images/flappybirdbg.png");
-    opacity: 0.1;
-    z-index: -1;
-}
+/* Removed overlay background to use backdrop blur instead */
 
 .game-title {
     font-size: 48px;
@@ -84,18 +80,17 @@ body {
 
 #game-over-screen .game-title,
 #victory-screen .game-title {
-    margin-top: 20px;
-    margin-bottom: 0px;
+    margin-top: 0;
+    margin-bottom: 5px;
 }
 
 #final-score,
 #victory-score {
-    font-size: 24px;
+    font-size: 28px;
     font-weight: bold;
-    color: white;
-    text-shadow: 1.2px 1.2px 0 #000;
-    margin: 5px 0 auto 0;
-    /* 'auto' bottom margin pushes subsequent elements (buttons) to the bottom */
+    color: #ffd700;
+    text-shadow: 2px 2px 0 #000;
+    margin: 0 0 20px 0;
 }
 
 .leaderboard-header {
