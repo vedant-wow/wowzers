@@ -10,7 +10,7 @@ export const GAME_CONFIG = {
   gravity: 0.3,
   velocityX: -2,
   initialVelocityY: -4,
-  victoryLevel: 5,
+  victoryLevel: 30,
 };
 
 export const AUDIO_CONFIG = {
