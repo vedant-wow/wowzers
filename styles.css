@@ -11,7 +11,7 @@ body {
 }
 
 #board {
-    background-image: url("./assets/Images/flappybirdbg.png");
+    background-image: url("./Images/flappybirdbg.png");
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     display: block;
 }
@@ -23,7 +23,7 @@ body {
     position: absolute;
     width: 360px;
     height: 640px;
-    background-image: url("./assets/Images/flappybirdbg.png");
+    background-image: url("./Images/flappybirdbg.png");
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -136,7 +136,6 @@ body {
     font-weight: bold;
     padding: 8px 20px;
     background-color: #2f6f73;
-    /* Teal */
     border: 3px solid white;
     color: white;
     text-shadow: 1px 1px 0 #000;
@@ -312,8 +311,6 @@ button:disabled {
     border: 3px solid white;
     border-radius: 10px;
     padding: 15px;
-    /* min-height: 300px;
-    max-height: 400px; */
     overflow-y: auto;
 }
 

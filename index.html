@@ -1,14 +1,11 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wowbie</title>
-    <link rel="stylesheet" href="flappybird.css" />
-    <link rel="icon" href="assets/Images/flappybird.png" type="image/x-icon" />
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="flappybird.js"></script>
+    <title>Wowbie - Voice Controlled Flappy Bird</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="icon" href="./Images/flappybird.png" type="image/x-icon" />
   </head>
   <body>
     <!-- Login Screen -->
@@ -44,7 +41,6 @@
         <p>🤫 Quiet = Fall Down</p>
       </div>
       <button id="play-btn">PLAY</button>
-
       <button id="logout-btn" class="secondary-btn">LOGOUT</button>
     </div>
 
@@ -93,6 +89,10 @@
       <button id="victory-logout-btn" class="secondary-btn">LOGOUT</button>
     </div>
 
+    <!-- Game Canvas -->
     <canvas id="board"></canvas>
+
+    <!-- Main TypeScript Module -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
