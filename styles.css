@@ -15,7 +15,7 @@ body {
 }
 
 #board {
-    background-image: url("./Images/flappybirdbg.png");
+    background-image: url("/Images/flappybirdbg.png");
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
     display: block;
 }
@@ -39,7 +39,7 @@ body {
 #signup-screen,
 #start-screen,
 #leaderboard-screen {
-    background-image: url("./Images/flappybirdbg.png");
+    background-image: url("/Images/flappybirdbg.png");
 }
 
 #game-over-screen,
