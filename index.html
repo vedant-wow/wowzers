@@ -76,25 +76,29 @@
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="hidden">
-      <h1 class="game-title">GAME OVER</h1>
-      <p id="final-score">Score: 0</p>
-      <button id="restart-btn">RESTART</button>
-      <button id="home-btn" class="tertiary-btn">HOME</button>
-      <button id="logout-btn-gameover" class="secondary-btn">LOGOUT</button>
+      <div class="game-over-content">
+        <h1 class="game-title">GAME OVER</h1>
+        <p id="final-score">Score: 0</p>
+        <button id="restart-btn">RESTART</button>
+        <button id="home-btn" class="tertiary-btn">HOME</button>
+        <button id="logout-btn-gameover" class="secondary-btn">LOGOUT</button>
+      </div>
     </div>
 
     <!-- Victory Screen -->
     <div id="victory-screen" class="hidden">
-      <img
-        src="./Images/win.png"
-        alt="Victory Trophy"
-        class="victory-trophy-img"
-      />
-      <h1 class="game-title">Wow! <br />You Won</h1>
-      <p id="victory-score">Score: 30</p>
-      <button id="victory-restart-btn">PLAY AGAIN</button>
-      <button id="victory-home-btn" class="tertiary-btn">HOME</button>
-      <button id="victory-logout-btn" class="secondary-btn">LOGOUT</button>
+      <div class="game-over-content">
+        <img
+          src="./Images/win.png"
+          alt="Victory Trophy"
+          class="victory-trophy-img"
+        />
+        <h1 class="game-title">Wow! <br />You Won</h1>
+        <p id="victory-score">Score: 30</p>
+        <button id="victory-restart-btn">PLAY AGAIN</button>
+        <button id="victory-home-btn" class="tertiary-btn">HOME</button>
+        <button id="victory-logout-btn" class="secondary-btn">LOGOUT</button>
+      </div>
     </div>
 
     <!-- Game Canvas -->
